@@ -355,7 +355,7 @@ export class SIP extends EventEmitter {
         ),
       },
     }
-    console.log({ videoOptions })
+    // console.log({ videoOptions })
     // this.phone._options.defaultOptions.videoOptions = videoOptions
     this.phone?.setWithVideo(sessionId, false, videoOptions)
     this.phone?.setWithVideo(sessionId, true, videoOptions)

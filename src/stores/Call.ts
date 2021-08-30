@@ -34,6 +34,8 @@ export class Call {
   callkeepAlreadyAnswered = false
   callkeepAlreadyRejected = false
 
+  @observable isFrontCamera = true
+
   @action
   answer = (ignoreNav?: boolean) => {
     this.answered = true
@@ -81,6 +83,7 @@ export class Call {
 
   toggleSwitchCamera = () => {
     sip.switchCamera(this.id)
+    this.isFrontCamera = !this.isFrontCamera
   }
   toggleVideo = () => {
     const pbxUser = contactStore.getPbxUserById(

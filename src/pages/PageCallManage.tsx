@@ -1,6 +1,8 @@
 import {
   mdiAlphaPCircle,
   mdiCallSplit,
+  mdiCamera,
+  mdiCameraFront,
   mdiCameraSwitchOutline,
   mdiDialpad,
   mdiMicrophone,
@@ -50,9 +52,8 @@ const css = StyleSheet.create({
   },
   BtnSwitchCamera: {
     position: 'absolute',
-    top: 100, // Header compact height
-    left: 0,
-    right: 40,
+    top: 10, // Header compact height
+    right: 10,
     zIndex: 100,
   },
   Btns: {
@@ -193,14 +194,13 @@ export class PageCallManage extends Component<{
   renderBtnSwitchCamera = (c: Call) => (
     <>
       <ButtonIcon
-        bgcolor='red'
+        bgcolor='white'
         color='black'
-        name={intl`SWITCH CAM`}
         noborder
         style={css.BtnSwitchCamera}
         onPress={() => this.onPressSwitchCamera(c)}
-        path={mdiCameraSwitchOutline}
-        size={40}
+        path={c.isFrontCamera ? mdiCameraFront : mdiCamera}
+        size={30}
         textcolor='white'
       />
     </>
@@ -394,8 +394,7 @@ export class PageCallManage extends Component<{
   render() {
     const c = callStore.getCurrentCall()
     void callStore.calls.length // trigger componentDidUpdate
-    const isVideoEnabled =
-      c?.answered && (c?.remoteVideoEnabled || c?.localVideoEnabled)
+    const isVideoEnabled = c?.remoteVideoEnabled && c?.localVideoEnabled
     const Container = isVideoEnabled ? Fragment : BrekekeGradient
     return <Container>{this.renderCall(c, isVideoEnabled)}</Container>
   }

@@ -253,15 +253,12 @@ export class SIP extends EventEmitter {
       useVideoClient: true,
       userAgent: lUseragent,
     })
-
+    //
     console.error('SIP PN debug: added listener on _ua')
-
-    // temporary cancel PN via SIP ua
     phone._ua?.on('newNotify', e => {
-      const rg = /(\w+)\W*INVITE\s*,.+,\s*Canceled/
-      const pnId = e?.request?.data?.match(rg)?.[1]
-      console.error(`SIP PN debug: newNotify fired on _ua, pnId=${pnId}`)
-      cancelRecentPn(pnId)
+      const pnIds = parseCanceledPnIds(e?.request?.data)
+      console.error(`SIP PN debug: newNotify fired on _ua pnIds=${pnIds}`)
+      pnIds?.forEach(cancelRecentPn)
     })
   }
 
@@ -372,4 +369,27 @@ export interface SipLoginOption {
   accessToken: string
   dtmfSendPal: boolean
   turnConfig?: RTCIceServer
+}
+
+export const parseCanceledPnIds = (data?: string) => {
+  if (!data || !/Canceled/i.test(data)) {
+    return
+  }
+  const m = data.match(/Content-Length:\s*(\d+)\s*/i)
+  if (!m) {
+    return
+  }
+  const i = m.index
+  const l = parseInt(m[1])
+  if (typeof i !== 'number' || isNaN(l)) {
+    return
+  }
+  const msg = data.substr(i + m[0].length)
+  console.error(`parseCanceledPnIds: msg.length=${msg.length} l=${l}`)
+  return msg
+    .split(/\n/g)
+    .map(s => s.trim())
+    .filter(s => /Canceled$/i.test(s))
+    .map(s => s.match(/(\w+)\W*INVITE/)?.[1])
+    .filter(s => s)
 }

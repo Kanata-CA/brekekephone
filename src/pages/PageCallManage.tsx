@@ -25,6 +25,7 @@ import { Platform, StyleSheet, View } from 'react-native'
 
 import { BrekekeGradient } from '../components/BrekekeGradient'
 import { ButtonIcon } from '../components/ButtonIcon'
+import { IncomingItemWithTimer } from '../components/CallNotify'
 import { FieldButton } from '../components/FieldButton'
 import { Layout } from '../components/Layout'
 import { RnTouchableOpacity } from '../components/Rn'
@@ -63,9 +64,6 @@ const css = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingBottom: 124, // Hangup button 64 + 2*30
-  },
-  Btns__isVideoEnabled: {
-    backgroundColor: v.layerBg,
   },
   Btns_Hidden: {
     opacity: 0,
@@ -114,6 +112,9 @@ export class PageCallManage extends Component<{
     if (!callStore.calls.length) {
       Nav().goToPageCallRecents()
     }
+  }
+  componentWillUnmount() {
+    callStore.onCallKeepAction()
   }
 
   @action toggleButtons = () => {
@@ -229,7 +230,7 @@ export class PageCallManage extends Component<{
     return (
       <Container
         onPress={isVideoEnabled ? this.toggleButtons : undefined}
-        style={[css.Btns, isVideoEnabled && css.Btns__isVideoEnabled]}
+        style={css.Btns}
       >
         <View style={css.Btns_VerticalMargin} />
         {/* TODO add Connecting... */}
@@ -364,14 +365,13 @@ export class PageCallManage extends Component<{
         </View>
         {incoming && (
           <>
+            <IncomingItemWithTimer />
             <View style={[css.Hangup, css.Hangup_incomingText]}>
               <RnText title white center>
                 {c.title}
               </RnText>
               <RnText bold white center>
-                {c.remoteVideoEnabled
-                  ? intl`Incoming Video Call`
-                  : intl`Incoming Audio Call`}
+                {intl`Incoming Call`}
               </RnText>
             </View>
             <View style={[css.Hangup, css.Hangup_answer]}>
@@ -394,8 +394,7 @@ export class PageCallManage extends Component<{
   render() {
     const c = callStore.getCurrentCall()
     void callStore.calls.length // trigger componentDidUpdate
-    const isVideoEnabled = c?.remoteVideoEnabled && c?.localVideoEnabled
-    const Container = isVideoEnabled ? Fragment : BrekekeGradient
-    return <Container>{this.renderCall(c, isVideoEnabled)}</Container>
+    const Container = c?.localVideoEnabled ? Fragment : BrekekeGradient
+    return <Container>{this.renderCall(c, c?.localVideoEnabled)}</Container>
   }
 }

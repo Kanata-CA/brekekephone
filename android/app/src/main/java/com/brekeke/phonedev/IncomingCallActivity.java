@@ -30,7 +30,8 @@ public class IncomingCallActivity extends Activity implements View.OnClickListen
       btnRecord,
       btnDtmf,
       btnHold,
-      btnEndcall;
+      btnEndcall,
+      btnSwitchCamera;
   public TextView txtCallerName,
       txtIncomingCall,
       txtConnecting,
@@ -100,6 +101,7 @@ public class IncomingCallActivity extends Activity implements View.OnClickListen
     btnDtmf = (Button) findViewById(R.id.btn_dtmf);
     btnHold = (Button) findViewById(R.id.btn_hold);
     btnEndcall = (Button) findViewById(R.id.btn_end_call);
+    btnSwitchCamera = (Button) findViewById(R.id.btn_switch_camera);
 
     btnAnswer.setOnClickListener(this);
     btnReject.setOnClickListener(this);
@@ -114,6 +116,7 @@ public class IncomingCallActivity extends Activity implements View.OnClickListen
     btnDtmf.setOnClickListener(this);
     btnHold.setOnClickListener(this);
     btnEndcall.setOnClickListener(this);
+    btnSwitchCamera.setOnClickListener(this);
 
     txtCallerName = (TextView) findViewById(R.id.txt_caller_name);
     txtIncomingCall = (TextView) findViewById(R.id.txt_incoming_call);
@@ -290,7 +293,9 @@ public class IncomingCallActivity extends Activity implements View.OnClickListen
   public void onBtnHoldClick(View v) {
     BrekekeModule.emit("hold", uuid);
   }
-
+  public void onBtnSwitchCamera(View v){
+    BrekekeModule.emit("switchCamera", uuid);
+  }
   public void onRequestUnlock(View v) {
     BrekekeModule.km.requestDismissKeyguard(
         this,
@@ -370,6 +375,9 @@ public class IncomingCallActivity extends Activity implements View.OnClickListen
       case R.id.btn_end_call:
         onBtnRejectClick(v);
         break;
+      case R.id.btn_switch_camera:
+        onBtnSwitchCamera(v);
+        break;
       default:
         break;
     }
@@ -389,6 +397,10 @@ public class IncomingCallActivity extends Activity implements View.OnClickListen
     updateBtnHoldLabel();
     btnEndcall.setVisibility(holding ? View.GONE : View.VISIBLE);
     txtCallIsOnHold.setVisibility(holding ? View.VISIBLE : View.GONE);
+  }
+
+  public void setBtnSwitchCamera(boolean isFrontCamera){
+    btnSwitchCamera.setSelected(isFrontCamera);
   }
 
   public void forceFinish() {

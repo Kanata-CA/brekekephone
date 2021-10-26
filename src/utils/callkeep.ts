@@ -250,6 +250,9 @@ export const setupCallKeep = async () => {
     eventEmitter.addListener('hold', (uuid: string) => {
       callStore.getCurrentCall()?.toggleHoldWithCheck()
     })
+    eventEmitter.addListener('switchCamera', (uuid: string) => {
+      callStore.getCurrentCall()?.toggleSwitchCamera()
+    })
     // In case of answer call when phone locked
     eventEmitter.addListener('backToForeground', () => {
       console.error('SIP PN debug: backToForeground')

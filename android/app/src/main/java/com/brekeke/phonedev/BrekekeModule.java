@@ -603,6 +603,20 @@ public class BrekekeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void setOnSwitchCamera(String uuid, boolean holding) {
+    UiThreadUtil.runOnUiThread(
+     new Runnable() {
+       @Override
+       public void run() {
+         try {
+           at(uuid).setBtnSwitchCamera(holding);
+         } catch (Exception e) {
+         }
+       }
+     });
+  }
+
+  @ReactMethod
   public void setJsCallsSize(int n) {
     if (n > 0) {
       acquireWakeLock();

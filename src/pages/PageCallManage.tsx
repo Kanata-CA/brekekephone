@@ -1,9 +1,8 @@
 import {
   mdiAlphaPCircle,
   mdiCallSplit,
-  mdiCamera,
-  mdiCameraFront,
-  mdiCameraSwitchOutline,
+  mdiCameraFrontVariant,
+  mdiCameraRearVariant,
   mdiDialpad,
   mdiMicrophone,
   mdiMicrophoneOff,
@@ -95,6 +94,12 @@ const css = StyleSheet.create({
     bottom: undefined,
     top: 100,
   },
+  cameraStyle: {
+    position: 'absolute',
+    top: 50,
+    right: 10,
+    zIndex: 100,
+  },
 })
 
 @observer
@@ -155,7 +160,6 @@ export class PageCallManage extends Component<{
         <PageCallTransferAttend />
       ) : (
         <>
-          {isVideoEnabled && this.renderBtnSwitchCamera(c)}
           {isVideoEnabled && this.renderVideo(c)}
           {this.renderBtns(c, isVideoEnabled)}
           {this.renderHangupBtn(c)}
@@ -163,51 +167,19 @@ export class PageCallManage extends Component<{
       )}
     </Layout>
   )
-  onPressSwitchCamera = async (c: Call) => {
-    c.toggleSwitchCamera()
-    // if(Platform.OS !== 'web'){
-    //   alert('Press Switch Camera')
-    // const cb = (s: MediaStream) => {
-    //   if(!c.localVideoStreamObject){
-    //     c.localVideoStreamObject = s
-    //   }else {
-    //     c.localVideoStreamObject.getVideoTracks().forEach(t => {if (t.kind === 'video') {t._switchCamera()}})
-    //   }
-    //   // s.getVideoTracks().forEach(t => {t._switchCamera()})
-    // }
-    // const er = (err: MediaStreamError) => {
 
-    // }
-    // const p = window.navigator.getUserMedia(
-    //   {
-    //     audio: true,
-    //     video: true,
-    //   },
-    //   cb,
-    //   er,
-    // ) as unknown as Promise<MediaStream>
-    // if (p?.then) {
-    //   p.then(cb).catch(er)
-    // }
-    // }
-    // c.remoteVideoStreamObject?.getVideoTracks().forEach(track => { if (track.kind === 'video') {track._switchCamera()} })
-  }
-  renderBtnSwitchCamera = (c: Call) => (
-    <>
-      <ButtonIcon
-        bgcolor='white'
-        color='black'
-        noborder
-        style={css.BtnSwitchCamera}
-        onPress={() => this.onPressSwitchCamera(c)}
-        path={c.isFrontCamera ? mdiCameraFront : mdiCamera}
-        size={30}
-        textcolor='white'
-      />
-    </>
-  )
   renderVideo = (c: Call) => (
     <>
+      <View style={css.cameraStyle}>
+        <ButtonIcon
+          // bgcolor={v.colors.primary}
+          color={'white'}
+          noborder
+          onPress={c.toggleSwitchCamera}
+          path={c.isFrontCamera ? mdiCameraFrontVariant : mdiCameraRearVariant}
+          size={40}
+        />
+      </View>
       <View style={css.Video_Space} />
       <View style={css.Video}>
         <VideoPlayer sourceObject={c.remoteVideoStreamObject} />

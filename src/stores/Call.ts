@@ -137,6 +137,7 @@ export class Call {
   toggleSwitchCamera = () => {
     sip.switchCamera(this.id)
     this.isFrontCamera = !this.isFrontCamera
+    BrekekeUtils.setOnSwitchCamera(this.callkeepUuid, this.isFrontCamera)
   }
   toggleVideo = () => {
     const pbxUser = contactStore.getPbxUserById(

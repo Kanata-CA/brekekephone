@@ -8,16 +8,14 @@ import { currentVersion } from '../components/variables'
 import { cancelRecentPn } from '../stores/cancelRecentPn'
 import { chatStore } from '../stores/chatStore'
 import { CallOptions, Sip } from './brekekejs'
-import { getCameraSourceId } from './getCameraSourceId'
+import { getCameraSourceId, getCameraSourceIdsWeb } from './getCameraSourceId'
 import { pbx } from './pbx'
-import { turnConfig } from './turnConfig'
-
+// import { turnConfig } from './turnConfig'
+const turnConfig = {}
 const sipCreateMediaConstraints = (
   sourceId?: string,
   isFrontCamera?: boolean,
 ) => {
-  console.log({ sourceId, isFrontCamera })
-
   return {
     audio: false,
     video: {
@@ -26,25 +24,36 @@ const sipCreateMediaConstraints = (
         minHeight: 0,
         minFrameRate: 0,
       },
-      facingMode:
-        Platform.OS === 'web'
-          ? undefined
-          : isFrontCamera
-          ? 'user'
-          : 'environment',
+      facingMode: isFrontCamera ? 'user' : 'environment',
       optional: sourceId ? [{ sourceId }] : [],
     },
   } as unknown as MediaStreamConstraints
 }
 
+type DeviceInputWeb = {
+  deviceId: string
+  kind: string
+  label: string
+  groupId: string
+  facing: string
+}
+
 export class SIP extends EventEmitter {
   phone?: Sip
-  currentFrontCamera: boolean = true
+  currentCamera: string | undefined = '1'
   sourceIdFrontCamera?: string = '1'
   sourceIdBackCamera?: string = '0'
+
+  webCameraIds?: DeviceInputWeb[] = []
   private init = async (o: SipLoginOption) => {
     this.sourceIdFrontCamera = await getCameraSourceId(true)
     this.sourceIdBackCamera = await getCameraSourceId(false)
+    this.webCameraIds = await getCameraSourceIdsWeb()
+    this.currentCamera =
+      Platform.OS === 'web'
+        ? this.webCameraIds?.[0].deviceId
+        : this.sourceIdFrontCamera
+
     const phone = new window.Brekeke.WebrtcClient.Phone({
       logLevel: 'all',
       multiSession: 1,
@@ -52,13 +61,13 @@ export class SIP extends EventEmitter {
         videoOptions: {
           call: {
             mediaConstraints: sipCreateMediaConstraints(
-              this.sourceIdFrontCamera,
+              this.currentCamera,
               true,
             ),
           },
           answer: {
             mediaConstraints: sipCreateMediaConstraints(
-              this.sourceIdFrontCamera,
+              this.currentCamera,
               true,
             ),
           },
@@ -328,27 +337,40 @@ export class SIP extends EventEmitter {
   setMuted = (muted: boolean, sessionId: string) => {
     return this.phone?.setMuted({ main: muted }, sessionId)
   }
-  switchCamera = (sessionId: string) => {
+  switchCamera = async (sessionId: string) => {
     // alert(this.currentFrontCamera)
     if (!this.phone) {
       return
     }
-    this.currentFrontCamera = !this.currentFrontCamera
+    let isFrontCamera = false
+    if (Platform.OS === 'web') {
+      const cameras = await (await getCameraSourceIdsWeb()).map(s => s.deviceId)
+      if (this.currentCamera) {
+        this.currentCamera = cameras[1]
+        isFrontCamera = false
+      } else {
+        isFrontCamera = this.currentCamera === cameras[0]
+        this.currentCamera = isFrontCamera ? cameras[1] : cameras[0]
+      }
+    } else {
+      this.currentCamera =
+        this.currentCamera === this.sourceIdFrontCamera
+          ? this.sourceIdBackCamera
+          : this.sourceIdFrontCamera
+      isFrontCamera = this.currentCamera === this.sourceIdFrontCamera
+    }
+
     const videoOptions = {
       call: {
         mediaConstraints: sipCreateMediaConstraints(
-          this.currentFrontCamera
-            ? this.sourceIdFrontCamera
-            : this.sourceIdBackCamera,
-          this.currentFrontCamera,
+          this.currentCamera,
+          isFrontCamera,
         ),
       },
       answer: {
         mediaConstraints: sipCreateMediaConstraints(
-          this.currentFrontCamera
-            ? this.sourceIdFrontCamera
-            : this.sourceIdBackCamera,
-          this.currentFrontCamera,
+          this.currentCamera,
+          isFrontCamera,
         ),
       },
     }

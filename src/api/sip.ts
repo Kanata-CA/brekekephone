@@ -8,7 +8,7 @@ import { currentVersion } from '../components/variables'
 import { cancelRecentPn } from '../stores/cancelRecentPn'
 import { chatStore } from '../stores/chatStore'
 import { CallOptions, Sip } from './brekekejs'
-import { getCameraSourceId, getCameraSourceIdsWeb } from './getCameraSourceId'
+import { getCameraSourceIds } from './getCameraSourceId'
 import { pbx } from './pbx'
 // import { turnConfig } from './turnConfig'
 const turnConfig = {}
@@ -41,19 +41,11 @@ type DeviceInputWeb = {
 export class SIP extends EventEmitter {
   phone?: Sip
   currentCamera: string | undefined = '1'
-  sourceIdFrontCamera?: string = '1'
-  sourceIdBackCamera?: string = '0'
 
-  webCameraIds?: DeviceInputWeb[] = []
+  cameraIds?: DeviceInputWeb[] = []
   private init = async (o: SipLoginOption) => {
-    this.sourceIdFrontCamera = await getCameraSourceId(true)
-    this.sourceIdBackCamera = await getCameraSourceId(false)
-    this.webCameraIds = await getCameraSourceIdsWeb()
-    this.currentCamera =
-      Platform.OS === 'web'
-        ? this.webCameraIds?.[0].deviceId
-        : this.sourceIdFrontCamera
-
+    this.cameraIds = await getCameraSourceIds()
+    this.currentCamera = this.cameraIds?.[0]?.deviceId || '1'
     const phone = new window.Brekeke.WebrtcClient.Phone({
       logLevel: 'all',
       multiSession: 1,
@@ -342,23 +334,23 @@ export class SIP extends EventEmitter {
     if (!this.phone) {
       return
     }
-    let isFrontCamera = false
-    if (Platform.OS === 'web') {
-      const cameras = await (await getCameraSourceIdsWeb()).map(s => s.deviceId)
-      if (this.currentCamera) {
-        this.currentCamera = cameras[1]
-        isFrontCamera = false
-      } else {
-        isFrontCamera = this.currentCamera === cameras[0]
-        this.currentCamera = isFrontCamera ? cameras[1] : cameras[0]
-      }
-    } else {
-      this.currentCamera =
-        this.currentCamera === this.sourceIdFrontCamera
-          ? this.sourceIdBackCamera
-          : this.sourceIdFrontCamera
-      isFrontCamera = this.currentCamera === this.sourceIdFrontCamera
+    // get camera info again for web mobile
+    if (this.cameraIds === undefined || this.cameraIds.length === 0) {
+      this.cameraIds = await getCameraSourceIds()
     }
+    // if don't have camera or just have one
+    if (
+      this.cameraIds === undefined ||
+      this.cameraIds.length === 1 ||
+      this.cameraIds.length === 0
+    ) {
+      return
+    }
+
+    let isFrontCamera = false
+    const cameras = this.cameraIds.map(s => s.deviceId)
+    isFrontCamera = this.currentCamera === cameras[0]
+    this.currentCamera = isFrontCamera ? cameras[1] : cameras[0]
 
     const videoOptions = {
       call: {

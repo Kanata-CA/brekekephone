@@ -1,3 +1,5 @@
+import { Platform } from 'react-native'
+
 import { intlDebug } from '../stores/intl'
 import { RnAlert } from '../stores/RnAlert'
 
@@ -28,7 +30,6 @@ export const getCameraSourceId = async (isFront: boolean) => {
       return value
     })
     .then(i => {
-      console.log({ enumerateDevices: i })
       return i?.deviceId || undefined
     })
     .catch((err: Error) => {
@@ -39,7 +40,7 @@ export const getCameraSourceId = async (isFront: boolean) => {
       return undefined
     })
 }
-export const getCameraSourceIdsWeb = async () => {
+export const getCameraSourceIds = async () => {
   const mediaDevices = window.navigator.mediaDevices
   if (!mediaDevices) {
     RnAlert.error({
@@ -52,7 +53,25 @@ export const getCameraSourceIdsWeb = async () => {
   return mediaDevices
     .enumerateDevices()
     .then(a => {
-      return a.filter(i => /videoinput/i.test(i.kind))
+      const videoInputs = a.filter(i => /videoinput/i.test(i.kind))
+      const frontCamera = videoInputs.find(i =>
+        Platform.OS === 'web'
+          ? i.label.includes('Front')
+          : i.facing.includes('front'),
+      )
+      const backCamera = videoInputs.find(i =>
+        Platform.OS === 'web'
+          ? i.label.includes('Back')
+          : i.facing.includes('environment'),
+      )
+      const result: MediaDeviceInfo[] = []
+      if (frontCamera) {
+        result.push(frontCamera)
+      }
+      if (backCamera) {
+        result.push(backCamera)
+      }
+      return result
     })
     .catch((err: Error) => {
       RnAlert.error({
